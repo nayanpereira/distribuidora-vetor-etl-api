@@ -1,0 +1,50 @@
+<section id="normalizacao" hidden aria-labelledby="normalizacao-title">
+  <header class="section-header">
+    <h1 id="normalizacao-title" tabindex="-1">Normalização e Auditoria (Admin)</h1>
+    <div class="actions">
+      <button id="admin-export-csv" type="button">Baixar Limpa (CSV)</button>
+      <button id="admin-export-xlsx" type="button">Baixar Limpa (Excel)</button>
+      <button id="refresh-etl" type="button">Atualizar tabela</button>
+    </div>
+  </header>
+
+  <div class="panel">
+    <h2>Importar Nova Planilha (.csv ou .xlsx)</h2>
+    <p>Envie um arquivo no padrão da Distribuidora Vetor para executar as regras de limpeza e ViaCEP.</p>
+    <form id="etl-upload-form" class="toolbar">
+      <label for="etl-file">Arquivo CSV ou Excel
+        <input id="etl-file" name="arquivo" type="file" accept=".csv,.xlsx,.xls" required>
+      </label>
+      <label for="etl-export-format">Formato se for apenas exportar
+        <select id="etl-export-format" name="formato_saida">
+          <option value="xlsx">Excel (.xlsx)</option>
+          <option value="csv">CSV (.csv)</option>
+        </select>
+      </label>
+      <button class="primary" type="submit">Processar planilha</button>
+    </form>
+    <p id="etl-upload-status" class="table-status" role="status"></p>
+  </div>
+
+  <div class="panel">
+    <h2>Tabela Completa de Normalização (Original → Final e Critério)</h2>
+    <p id="etl-table-status" class="table-status" role="status"></p>
+    <div class="table-scroll" role="region" aria-label="Tabela completa de normalização" tabindex="0">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Razão Social</th>
+            <th scope="col">Bairro (Original → Final)</th>
+            <th scope="col">CEP (Original → Final)</th>
+            <th scope="col">CNPJ (Original → Final)</th>
+            <th scope="col">Telefone (Original → Final)</th>
+            <th scope="col">E-mail (Original → Final)</th>
+            <th scope="col">Cadastro (Original → Final)</th>
+          </tr>
+        </thead>
+        <tbody id="etl-rows"></tbody>
+      </table>
+    </div>
+  </div>
+</section>

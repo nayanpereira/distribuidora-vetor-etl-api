@@ -19,6 +19,7 @@
         <a data-nav="clientes" href="{% url 'frontend:clientes' %}">Clientes</a>
         <a data-nav="vendedores" href="{% url 'frontend:vendedores' %}">Vendedores</a>
         <a data-nav="relatorios" href="{% url 'frontend:relatorios' %}">Relatórios</a>
+        <a id="nav-normalizacao" data-nav="normalizacao" href="{% url 'frontend:normalizacao' %}" hidden>Normalização</a>
       </nav>
       <div class="account">
         <span id="session-status">Visitante</span>
@@ -29,12 +30,17 @@
     <main id="conteudo" tabindex="-1"
           data-clientes-url="{% url 'cliente-list' %}"
           data-vendedores-url="{% url 'vendedor-list' %}"
-          data-token-url="{% url 'api-token' %}">
+          data-token-url="{% url 'api-token' %}"
+          data-perfil-url="{% url 'auth-perfil' %}"
+          data-exportar-url="{% url 'clientes-exportar' %}"
+          data-etl-tabela-url="{% url 'admin-etl-tabela' %}"
+          data-etl-processar-url="{% url 'admin-etl-processar' %}">
       <p id="notice" class="notice" role="status" hidden></p>
       <noscript><p>Ative o JavaScript para acessar o painel.</p></noscript>
       {% include 'distribuidora/clientes.html' %}
       {% include 'distribuidora/vendedores.html' %}
       {% include 'distribuidora/relatorios.html' %}
+      {% include 'distribuidora/normalizacao.html' %}
       {% include 'distribuidora/login.html' %}
     </main>
   </div>

@@ -1,4 +1,4 @@
-import { endpoints, request, setToken } from './api.js';
+import { endpoints, request, setStaff, setToken } from './api.js';
 import { byId, disableButton, errorText, formData, message } from './ui.js';
 
 export function setupAuth(onLogin, onLogout) {
@@ -24,9 +24,13 @@ export function setupAuth(onLogin, onLogout) {
       if (controller.signal.aborted) return;
       if (typeof result.token !== 'string' || !result.token) throw new Error('Resposta de login inválida.');
       setToken(result.token);
-      username = credentials.username;
+      const perfil = await request(endpoints.perfil, { signal: controller.signal });
+      if (controller.signal.aborted) return;
+      setStaff(perfil.is_staff || perfil.is_superuser);
+      username = perfil.username || credentials.username;
       onLogin();
     } catch (error) {
+      setToken(null);
       if (!controller.signal.aborted) {
         message(feedback, [400, 401].includes(error.status)
           ? 'Usuário ou senha inválidos.'

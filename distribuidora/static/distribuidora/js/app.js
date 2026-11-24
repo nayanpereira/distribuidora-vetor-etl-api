@@ -1,6 +1,7 @@
-import { hasToken } from './api.js';
+import { hasAdmin, hasToken } from './api.js';
 import { setupAuth } from './auth.js';
 import { setupClients } from './clientes.js';
+import { setupNormalization } from './normalizacao.js';
 import { setupReports } from './relatorios.js';
 import { setupSellers } from './vendedores.js';
 import { byId, closeDialog, notice } from './ui.js';
@@ -22,6 +23,7 @@ const loaders = {
   clientes: setupClients(refresh),
   vendedores: setupSellers(refresh),
   relatorios: setupReports(refresh),
+  normalizacao: setupNormalization(refresh),
 };
 const auth = setupAuth(
   () => {
@@ -37,6 +39,10 @@ const auth = setupAuth(
 
 function navigate(section, { replace = false, pop = false, focus = true } = {}) {
   if (section === 'login' && hasToken()) {
+    navigate('clientes', { replace: true, focus });
+    return;
+  }
+  if (section === 'normalizacao' && !hasAdmin()) {
     navigate('clientes', { replace: true, focus });
     return;
   }
@@ -62,9 +68,13 @@ function navigate(section, { replace = false, pop = false, focus = true } = {}) 
   document.querySelector('.layout').classList.toggle('login-layout', isLogin);
 
   const authenticated = hasToken();
+  const admin = hasAdmin();
   byId('session-status').textContent = authenticated ? auth.username() : 'Visitante';
   byId('login-link').hidden = authenticated || section === 'login';
   byId('logout').hidden = !authenticated;
+  byId('nav-normalizacao').hidden = !admin;
+  byId('export-csv').hidden = !authenticated;
+  byId('export-xlsx').hidden = !authenticated;
   byId('new-client').hidden = !authenticated;
   byId('new-seller').hidden = !authenticated;
   document.title = `${byId(`${section}-title`).textContent} · Distribuidora Vetor`;

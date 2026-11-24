@@ -1,4 +1,4 @@
-import { endpoints, hasToken, recordPath, request } from './api.js';
+import { downloadFile, endpoints, hasToken, recordPath, request } from './api.js';
 import { byId, button, confirmDelete, editor, element, errorText, notice, openDialog, row } from './ui.js';
 
 const search = byId('bairro-search');
@@ -61,6 +61,16 @@ export function setupClients(refresh) {
     });
   }
 
+  byId('export-csv').addEventListener('click', () => {
+    if (!hasToken()) return;
+    downloadFile(`${endpoints.exportar}?formato=csv`, { defaultFilename: 'clientes_vetor_normalizados.csv' })
+      .catch((error) => notice(errorText(error), true));
+  });
+  byId('export-xlsx').addEventListener('click', () => {
+    if (!hasToken()) return;
+    downloadFile(`${endpoints.exportar}?formato=xlsx`, { defaultFilename: 'clientes_vetor_normalizados.xlsx' })
+      .catch((error) => notice(errorText(error), true));
+  });
   byId('new-client').addEventListener('click', () => edit(null));
   byId('bairro-form').addEventListener('submit', (event) => {
     event.preventDefault();
