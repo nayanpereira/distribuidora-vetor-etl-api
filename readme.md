@@ -1,127 +1,52 @@
-# Distribuidora Vetor - Pipeline ETL & API REST (Projeto Integrador)
+# Distribuidora Vetor — Pipeline ETL, API REST & Painel Web
 
-Este repositório contém a solução desenvolvida para a **Distribuidora Vetor**, abrangendo desde o pipeline de ETL (Extração, Transformação e Carga) de dados brutos de clientes até a disponibilização de uma API REST integrada a um banco de dados relacional PostgreSQL.
-
-## 📌 Status Atual do Projeto
-
-As etapas de **Fundações** e **ETL** já foram desenvolvidas e consolidadas:
-
-* **Fase 0 (Kickoff):** Repositório criado, estrutura de diretórios padronizada e ambiente virtual configurado.
-
-* **Fase 1 (Fundações & Banco de Dados):**
-  * Modelagem relacional concluída (`Cliente`, `Vendedor`, `Auditoria`, `CepCache`).
-  * Integração total com o **PostgreSQL**.
-  * Tabelas registradas e configuradas no **Django Admin** (com auditoria em modo *read-only*).
-
-* **Fase 2 (ETL & Higienização de Dados):**
-  * Script de ETL migrado de Jupyter Notebook para um comando nativo Django (`python manage.py etl`).
-  * Higienização e normalização com Regex (CNPJ, Telefone, E-mail com acentos, Datas).
-  * Integração com a API do **ViaCEP** com mecanismo de *cache* em banco.
-  * Regra de decisão para nomes de bairros e *fallback* inteligente.
-  * Processamento **transacional** (`transaction.atomic`) e **idempotente** (`update_or_create`).
-  * Registro de histórico linha a linha na tabela de `Auditoria`.
+Solução completa desenvolvida para a **Distribuidora Vetor**, contemplando o pipeline de ETL (Extração, Transformação e Carga) com auditoria linha a linha, persistência em **PostgreSQL**, **API REST** documentada (OpenAPI/Redoc) e **interface web** responsiva com controle de permissões por perfil.
 
 ---
 
-## 🌿 Fluxo de Trabalho no Git (Branches & Pull Requests)
+## 📌 Funcionalidades Implementadas
 
-> ⚠️ **REGRA OBRIGATÓRIA DA EQUIPE:** É estritamente proibido fazer `git push` diretamente na branch `main`. Todo o desenvolvimento deve ocorrer em branches de funcionalidade e passar por Pull Request (PR).
-
-Siga o passo a passo abaixo para desenvolver qualquer tarefa:
-
-1. **Garanta que sua `main` local esteja atualizada:**
-   ```bash
-   git checkout main
-   git pull origin main
-   ```
-
-2. **Crie uma nova branch para a sua tarefa:**
-   Use nomes claros e descritivos com os prefixos `feature/`, `docs/`, `fix/` ou `refactor/`:
-   ```bash
-   # Exemplos:
-   git checkout -b feature/api-serializers
-   git checkout -b feature/frontend-login
-   git checkout -b docs/modelo-der
-   ```
-
-3. **Desenvolva a tarefa e faça os commits:**
-   ```bash
-   git add .
-   git commit -m "feat(api): cria serializers de cliente e vendedor"
-   ```
-
-4. **Envie a sua branch para o GitHub:**
-   ```bash
-   git push origin feature/nome-da-sua-branch
-   ```
-
-5. **Abra um Pull Request (PR):**
-   * Vá até o repositório no GitHub.
-   * Clique em **"Compare & pull request"**.
-   * Descreva o que foi implementado na tarefa.
-   * Peça a revisão de pelo menos um integrante da equipe antes de realizar o *Merge* para a `main`.
+* **Pipeline ETL & Higienização (`distribuidora/etl_service.py` e `manage.py etl`):**
+  * Normalização com Regex e regras de domínio para **CEP**, **Bairro** (ViaCEP com cache em banco + *fallback* canonizado para regiões do DF), **CNPJ**, **Telefone** (celular/fixo com remoção de `+55`), **E-mail** (minúsculas e remoção de acentos) e **Datas** (`YYYY-MM-DD`).
+  * Carga transacional (`transaction.atomic`) e idempotente (`update_or_create`) com histórico na tabela `Auditoria`.
+* **API REST (`distribuidora/views.py` e `distribuidora/urls.py`):**
+  * CRUD completo de **Clientes** e **Vendedores** (com proteção `409 Conflict` ao tentar excluir vendedor com clientes vinculados).
+  * Filtros por bairro (`/api/clientes/bairro/{nome}/`), vendedor (`/api/vendedores/{id}/clientes/`), status de revisão (`?precisa_revisao=true`) e resumo agrupado (`/api/clientes/bairros/`).
+  * Autenticação por Token (`/api/auth/token/`) e ocultação automática de dados sensíveis (CNPJ, telefone e e-mail) para visitantes.
+  * Documentação interativa via **Redoc** (`/api/docs/`) e esquema OpenAPI (`/api/schema/`).
+* **Interface Web & Painel Administrativo (`distribuidora/templates/` e `distribuidora/static/`):**
+  * **Visitante:** consulta pública de clientes, vendedores e relatórios por bairro.
+  * **Usuário Autenticado (Funcionário):** cadastro/edição/exclusão de registros, visualização de dados completos e exportação da base limpa em **CSV** e **Excel (`.xlsx`)**.
+  * **Administrador (`is_staff`):** aba exclusiva **Normalização**, exibindo a tabela completa de auditoria (`Original → Final` + critério aplicado) e upload de novas planilhas `.csv` ou `.xlsx` com opção de **incorporar ao histórico do banco** ou **apenas normalizar e baixar sem salvar**.
 
 ---
 
-## 👥 Divisão de Tarefas & Próximos Passos (Backlog da Equipe)
+## 🚀 Guia de Execução (Escolha o seu Cenário)
 
-Para garantir a entrega e apresentação do projeto, as tarefas pendentes estão divididas entre os dois demais integrantes da equipe:
+### 🟢 Cenário 1: Primeira vez rodando o projeto do zero
 
-### 🎯 1. Alinhamentos Iniciais Conjuntos (Pendências da Fase 0)
+Siga esta sequência se você acabou de clonar o repositório e ainda não possui o banco nem o ambiente Python configurados.
 
-*Ambos os integrantes devem realizar as seguintes tarefas da Fase 0:*
-
-* **G-01:** Ler todos os documentos do projeto juntos e listar eventuais dúvidas para o professor.
-* **G-02:** Confirmar/validar a escolha da stack (**Django REST Framework** vs FastAPI) e conferir as datas de entrega e apresentação. *(Nota: A infraestrutura base em DRF já está implementada).*
-* **G-06:** Escrever formalmente a **Definition of Done (DoD)** (critérios para considerar uma tarefa pronta: código revisado, testado e documentado).
-
-### 💻 2. Integrante B: Desenvolvimento Web (Fases 3 e 4)
-
-Foco na criação da camada de serviço/API e interface com o usuário.
-
-* **Fase 3 — API REST (Backend):**
-  * **A-01:** Serializers (`ClienteSerializer`, `VendedorSerializer`, `AuditoriaSerializer`).
-  * **A-03 / A-04:** Endpoints e CRUD de clientes e vendedores (incluindo o tratamento de erro `409 Conflict` ao tentar deletar vendedores com clientes vinculados).
-  * **A-05 / A-06:** Rotas de busca por bairro (`/api/clientes/bairro/{nome}/`) e filtro por vendedor (`/api/vendedores/{id}/clientes/`).
-  * **A-07 / A-08:** Autenticação por Token e permissões (Usuário autenticado: CRUD completo; Visitante: Apenas GET).
-  * **A-09 / A-10:** Documentação OpenAPI/Redoc (`drf-spectacular`) e testes automatizados de API.
-
-* **Fase 4 — Front-end Simples:**
-  * **F-01 a F-08:** Telas simples em HTML/CSS/JS (consumindo a API via `fetch`): Tela de login (armazenamento do Token), listagem paginada de clientes, formulários de criação/edição e exclusão com confirmação.
-  * **F-10:** Modo visitante (ocultar botões de escrita para usuários não autenticados).
-
-### 📑 3. Integrante C: Documentação, QA & Apresentação (Fases 5, 6 e 7)
-
-Foco nos artefatos acadêmicos, qualidade de software e materiais de apresentação.
-
-* **Fase 5 — Documentação Geral & Artefatos Scrum:**
-  * **DOC-02 / DOC-03:** Criar `docs/API.md` e os modelos **MER / DER** (usando Mermaid) em `docs/MODELO_DE_DADOS.md`.
-  * **DOC-04 / DOC-05:** Redigir `REGRAS_DE_NORMALIZACAO.md` e o relatório de *trade-offs* `RELATORIO_TRADEOFFS.md` (1 a 2 páginas, em linguagem não técnica).
-  * **DOC-06 a DOC-09:** Mapear Requisitos (RF/RNF), Casos de Uso, Diagrama de Classes e Arquitetura Abstrata ($CSV \rightarrow ETL \rightarrow PostgreSQL \rightarrow API \rightarrow Frontend$).
-  * **DOC-10:** Documentação Scrum (Papéis, Sprints, Planning, Review e Retrospectivas).
-
-* **Fase 6 — Integração e QA:**
-  * **Q-01 a Q-06:** Testar instalação em máquina limpa seguindo o README, rodar suíte de testes (`python manage.py test`), verificar variáveis de ambiente e criar a tag `v1.0` de congelamento de código.
-
-* **Fase 7 — Apresentação:**
-  * **P-01 a P-06:** Elaborar slides da apresentação, definir roteiro da demonstração ao vivo, preparar Plano B (gravação/prints da demo) e ensaiar a fala com a equipe (20 min + 5 min de perguntas).
-
----
-
-## 🛠️ Guia de Instalação e Execução Local
-
-Siga as instruções abaixo para rodar o projeto no seu ambiente local.
-
-### 1. Pré-requisitos
-
+#### 1. Pré-requisitos
 * **Python 3.11+** instalado.
-* **PostgreSQL** instalado e em execução localmente.
+* **PostgreSQL** instalado localmente.
 * **Git** instalado.
+#### 2. Garantir que o PostgreSQL esteja aberto e rodando
+* **Windows:** Abra o **pgAdmin 4** pelo Menu Iniciar do Windows e conecte ao seu servidor local (digitando sua senha do PostgreSQL, se solicitado). Isso já garante que o banco esteja ativo e pronto para uso.
+* **Linux (Ubuntu/Debian):** Caso não use o pgAdmin, inicie o serviço pelo terminal com:
+  ```bash
+  sudo service postgresql start
+#### 3. Criar o banco de dados `distribuidora_db`
+Escolha **uma** das formas abaixo:
+* **Via terminal (`psql`):**
+  ```powershell
+  psql -U postgres -c "CREATE DATABASE distribuidora_db;"
+  ```
+* **Via pgAdmin 4:** conecte ao servidor local → clique com o botão direito em **Databases** → **Create > Database...** → digite `distribuidora_db` → **Save**.
 
-### 2. Clonar o Repositório e Configurar o Ambiente Virtual
-
-```bash
-# 1. Clonar o repositório
+#### 4. Clonar o projeto, criar o ambiente virtual e instalar o Django e dependências
+```powershell
+# 1. Clonar o repositório e entrar na pasta
 git clone https://github.com/nayanpereira/distribuidora-vetor-etl-api.git
 cd distribuidora-vetor-etl-api
 
@@ -129,75 +54,153 @@ cd distribuidora-vetor-etl-api
 python -m venv .venv
 
 # 3. Ativar o ambiente virtual
-# No Windows (PowerShell):
+# Windows (PowerShell):
 .\.venv\Scripts\Activate.ps1
-# No Linux/macOS:
+# Linux/macOS:
 source .venv/bin/activate
 
-# 4. Instalar as dependências
+# 4. Instalar o Django, Django REST Framework, Pandas, OpenPyXL e demais pacotes
 pip install -r requirements.txt
 ```
+*(Caso o PowerShell bloqueie a ativação da `.venv` no Windows, rode antes: `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`).*
 
-### 3. Configurar o Banco de Dados (PostgreSQL)
+#### 5. Configurar as variáveis de ambiente (`.env`)
+Crie um arquivo chamado **`.env`** na raiz do projeto (ao lado do `manage.py`) baseado no `.env.example`:
+```env
+SECRET_KEY=troque-por-uma-chave-segura-do-django
+DEBUG=True
+ALLOWED_HOSTS=127.0.0.1,localhost
 
-1. Abra o seu gerenciador do PostgreSQL (pgAdmin, DBeaver ou via terminal `psql`) e crie o banco de dados:
-   ```sql
-   CREATE DATABASE distribuidora_db;
-   ```
-
-2. Na raiz do projeto, crie um arquivo chamado **`.env`** (utilize o `.env.example` como referência):
-   ```ini
-   DB_NAME=distribuidora_db
-   DB_USER=postgres
-   DB_PASSWORD=SUA_SENHA_DO_POSTGRES
-   DB_HOST=127.0.0.1
-   DB_PORT=5432
-   SECRET_KEY=sua-chave-secreta-django
-   DEBUG=True
-   ```
-
-### 4. Executar Migrações e Iniciar o ETL
-
-Com a `.venv` ativa e o banco configurado no `.env`, execute:
-
-```bash
-# 1. Aplicar a estrutura de tabelas no PostgreSQL
-python manage.py migrate
-
-# 2. Executar o pipeline de ETL (Lê o CSV, faz ViaCEP e popula o PostgreSQL)
-python manage.py etl
-
-# 3. Criar o superusuário para acessar o Django Admin
-python manage.py createsuperuser
+DB_NAME=distribuidora_db
+DB_USER=postgres
+DB_PASSWORD=SUA_SENHA_DO_POSTGRES
+DB_HOST=127.0.0.1
+DB_PORT=5432
 ```
 
-### 5. Iniciar o Servidor de Desenvolvimento
+#### 6. Preparar o banco, rodar o ETL inicial e iniciar o Django
+A partir deste ponto, todos os comandos utilizam o **`manage.py`** do Django (com a `.venv` ativa):
+```powershell
+# 1. Criar as tabelas no PostgreSQL
+python manage.py migrate
 
-```bash
+# 2. Popular o banco rodando o pipeline ETL (CSV + ViaCEP + Auditoria)
+python manage.py etl
+
+# 3. Criar um usuário administrador (necessário para acessar a aba Normalização e o /admin/)
+python manage.py createsuperuser
+
+# 4. INICIAR O SERVIDOR DJANGO
 python manage.py runserver
 ```
 
-Acesse no navegador:
-* **Django Admin:** `http://127.0.0.1:8000/admin/` (para visualizar Clientes, Vendedores, Caches de CEP e a Tabela de Auditoria).
-* **API Base:** `http://127.0.0.1:8000/api/`
+---
+
+### 🟡 Cenário 2: Já tenho uma versão antiga e preciso atualizar e rodar novamente
+
+Se você já tinha o projeto configurado anteriormente e puxou novas atualizações do GitHub (como suporte a Excel `.xlsx`, painel de normalização admin e ajustes no `.env`):
+
+```powershell
+# 1. Garantir que o PostgreSQL esteja rodando (se necessário)
+# Windows (PowerShell como Admin): Start-Service postgresql-x64-17
+
+# 2. Atualizar o código local a partir da main
+git checkout main
+git pull origin main
+
+# 3. Ativar o ambiente virtual (.venv)
+.\.venv\Scripts\Activate.ps1
+
+# 4. Atualizar/instalar novas dependências (ex.: openpyxl)
+pip install -r requirements.txt
+
+# 5. Conferir se o arquivo .env existe na raiz com DB_USER=postgres e sua DB_PASSWORD
+
+# 6. Aplicar eventuais novas migrações e reprocessar o ETL atualizado
+python manage.py migrate
+python manage.py etl
+
+# 7. INICIAR O SERVIDOR DJANGO
+python manage.py runserver
+```
+*(Dica: após abrir o navegador, pressione **`Ctrl + Shift + R`** ou **`Ctrl + F5`** para limpar o cache dos arquivos JavaScript antigos).*
 
 ---
 
-## 📁 Estrutura do Projeto
+### 🔵 Cenário 3: Rotina diária (tudo já instalado e configurado)
+
+Quando o ambiente e o banco já estão prontos e você quer apenas ligar a aplicação para usar ou desenvolver:
+
+```powershell
+# 1. Entrar na pasta do projeto e ativar o ambiente virtual
+cd distribuidora-vetor-etl-api
+.\.venv\Scripts\Activate.ps1
+
+# 2. INICIAR O SERVIDOR DJANGO
+python manage.py runserver
+```
+*(Se aparecer erro de conexão com o banco, certifique-se apenas de que o serviço do PostgreSQL foi iniciado).*
+
+---
+
+## 🌐 Endereços de Acesso (com o Django rodando)
+
+* **Painel Web (Front-end):** `http://127.0.0.1:8000/clientes/`
+* **Tela de Login:** `http://127.0.0.1:8000/entrar/`
+* **Documentação da API (Redoc):** `http://127.0.0.1:8000/api/docs/`
+* **API REST Base:** `http://127.0.0.1:8000/api/`
+* **Django Admin:** `http://127.0.0.1:8000/admin/`
+
+---
+
+## 🧪 Testes Automatizados
+
+Para validar as regras de ETL, permissões e endpoints da API, execute (com a `.venv` ativa):
+
+```powershell
+python manage.py test
+```
+
+---
+
+## 🌿 Fluxo de Trabalho no Git (Branches & Pull Requests)
+
+> ⚠️ **REGRA DA EQUIPE:** Evite `git push` direto na `main` durante o desenvolvimento de novas tarefas. Trabalhe em branches dedicadas e abra Pull Requests.
+
+1. Atualize sua `main`: `git checkout main && git pull origin main`
+2. Crie sua branch: `git checkout -b feature/nome-da-tarefa` (ou `docs/...`, `fix/...`)
+3. Faça seus commits e envie: `git push origin feature/nome-da-tarefa`
+4. Abra o **Pull Request** no GitHub para revisão antes do *Merge*.
+
+---
+
+## 📁 Estrutura Atual do Projeto
 
 ```text
 distribuidora-vetor-etl-api/
 │
-├── config/                 # Configurações globais do Django (settings, urls, etc.)
-├── dados/                  # Arquivo CSV original (clientes_distribuidora_vetor.csv)
-├── distribuidora/          # App principal (models, views, serializers, admin)
-│   └── management/
-│       └── commands/
-│           └── etl.py      # Comando de ETL executável (manage.py etl)
-├── docs/                   # Documentações acadêmicas e diagramas do projeto
-├── notebooks/              # Jupyter Notebooks utilizados na fase de exploração
-├── .env.example            # Modelo de variáveis de ambiente
-├── .gitignore              # Arquivos ignorados pelo Git
-├── manage.py               # Utilitário de linha de comando do Django
-└── requirements.txt        # Dependências do projeto
+├── config/                         # Configurações globais do Django (settings, urls, wsgi/asgi)
+├── dados/                          # Base bruta CSV (clientes_distribuidora_vetor.csv)
+├── distribuidora/                  # App principal (ETL, API REST e Front-end)
+│   ├── management/commands/
+│   │   └── etl.py                  # Comando CLI (python manage.py etl)
+│   ├── static/distribuidora/
+│   │   ├── css/style.css           # Estilos da interface web
+│   │   └── js/                     # Módulos ES6 (api, app, auth, clientes, normalizacao, relatorios, ui, vendedores)
+│   ├── templates/distribuidora/    # Templates HTML (base, clientes, vendedores, relatorios, normalizacao, login, forms)
+│   ├── admin.py                    # Configuração do Django Admin
+│   ├── etl_service.py              # Motor compartilhado de higienização, ViaCEP e carga/exportação
+│   ├── frontend_urls.py            # Rotas das páginas web
+│   ├── models.py                   # Modelos (Cliente, Vendedor, Auditoria, CepCache)
+│   ├── serializers.py              # Serializers DRF (público, autenticado e resumo)
+│   ├── services.py                 # Consultas e regras de negócio da API
+│   ├── tests.py                    # Suíte de testes automatizados
+│   ├── urls.py                     # Rotas da API REST (/api/...)
+│   └── views.py                    # ViewSets e endpoints de exportação/upload ETL
+├── docs/                           # Documentação técnica, diagramas e artefatos Scrum
+├── notebooks/                      # Jupyter Notebooks de exploração e validação do ETL
+├── .env.example                    # Modelo comentado de variáveis de ambiente
+├── .gitignore                      # Arquivos ignorados pelo Git (.venv, .env, __pycache__, etc.)
+├── manage.py                       # Utilitário principal de linha de comando do Django
+└── requirements.txt                # Dependências do projeto (Django, DRF, Pandas, OpenPyXL, etc.)
 ```
