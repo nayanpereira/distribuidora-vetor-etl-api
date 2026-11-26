@@ -13,7 +13,7 @@ Solução completa desenvolvida para a **Distribuidora Vetor**, contemplando o p
   * CRUD completo de **Clientes** e **Vendedores** (com proteção `409 Conflict` ao tentar excluir vendedor com clientes vinculados).
   * Filtros por bairro (`/api/clientes/bairro/{nome}/`), vendedor (`/api/vendedores/{id}/clientes/`), status de revisão (`?precisa_revisao=true`) e resumo agrupado (`/api/clientes/bairros/`).
   * Autenticação por Token (`/api/auth/token/`) e ocultação automática de dados sensíveis (CNPJ, telefone e e-mail) para visitantes.
-  * Documentação interativa via **Redoc** (`/api/docs/`) e esquema OpenAPI (`/api/schema/`).
+  * Documentação interativa: **Swagger** (`/api/docs/`), **Redoc** (`/api/redoc/`) e esquema OpenAPI (`/api/schema/`).
 * **Interface Web & Painel Administrativo (`distribuidora/templates/` e `distribuidora/static/`):**
   * **Visitante:** consulta pública de clientes, vendedores e relatórios por bairro.
   * **Usuário Autenticado (Funcionário):** cadastro/edição/exclusão de registros, visualização de dados completos e exportação da base limpa em **CSV** e **Excel (`.xlsx`)**.
@@ -36,6 +36,7 @@ Siga esta sequência se você acabou de clonar o repositório e ainda não possu
 * **Linux (Ubuntu/Debian):** Caso não use o pgAdmin, inicie o serviço pelo terminal com:
   ```bash
   sudo service postgresql start
+  ```
 #### 3. Criar o banco de dados `distribuidora_db`
 Escolha **uma** das formas abaixo:
 * **Via terminal (`psql`):**
@@ -94,6 +95,17 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
+Saída esperada do ETL na primeira execução, com o CSV da Primora:
+
+```text
+Iniciando ETL a partir de: dados/clientes_distribuidora_vetor.csv
+Arquivo lido com sucesso. Total de linhas: 47
+Executando regras de higienização, ViaCEP e carga no PostgreSQL...
+ETL Concluído! 47 processados (47 criados, 0 atualizados).
+```
+
+Rodar de novo não duplica clientes: o resumo passa a mostrar `0 criados, 47 atualizados`.
+
 ---
 
 ### 🟡 Cenário 2: Já tenho uma versão antiga e preciso atualizar e rodar novamente
@@ -147,7 +159,8 @@ python manage.py runserver
 
 * **Painel Web (Front-end):** `http://127.0.0.1:8000/clientes/`
 * **Tela de Login:** `http://127.0.0.1:8000/entrar/`
-* **Documentação da API (Redoc):** `http://127.0.0.1:8000/api/docs/`
+* **Documentação da API (Swagger):** `http://127.0.0.1:8000/api/docs/`
+* **Documentação da API (Redoc):** `http://127.0.0.1:8000/api/redoc/`
 * **API REST Base:** `http://127.0.0.1:8000/api/`
 * **Django Admin:** `http://127.0.0.1:8000/admin/`
 
@@ -155,11 +168,29 @@ python manage.py runserver
 
 ## 🧪 Testes Automatizados
 
-Para validar as regras de ETL, permissões e endpoints da API, execute (com a `.venv` ativa):
+Para validar as permissões e os endpoints da API e do painel web (29 testes; ainda não há testes automatizados das regras do ETL), execute (com a `.venv` ativa):
 
 ```powershell
 python manage.py test
 ```
+
+---
+
+## 📚 Documentação do Projeto
+
+Os documentos ficam na pasta `docs/`:
+
+* [`docs/API.md`](docs/API.md): rotas, permissões, validações e exemplos da API
+* [`docs/REQUISITOS.md`](docs/REQUISITOS.md): requisitos funcionais e não funcionais, com a situação de cada um
+* [`docs/CASOS_DE_USO.md`](docs/CASOS_DE_USO.md): atores, diagrama e descrição dos casos de uso
+* [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md): arquitetura, camadas e fluxos
+* [`docs/DIAGRAMA_DE_CLASSES.md`](docs/DIAGRAMA_DE_CLASSES.md): diagramas de classes (domínio, ETL e API)
+* [`docs/MODELO_DE_DADOS.md`](docs/MODELO_DE_DADOS.md): MER, DER e dicionário de dados
+* [`docs/REGRAS_DE_NORMALIZACAO.md`](docs/REGRAS_DE_NORMALIZACAO.md): regras de tratamento, critérios da auditoria e limites conhecidos
+* [`docs/RELATORIO_TRADEOFFS.md`](docs/RELATORIO_TRADEOFFS.md): decisões do tratamento de dados e seus custos, em linguagem não técnica
+* [`docs/REGISTRO_DE_QA.md`](docs/REGISTRO_DE_QA.md): verificações da fase de QA
+* [`docs/scrum/DOCUMENTACAO_SCRUM.md`](docs/scrum/DOCUMENTACAO_SCRUM.md): papéis, sprints, backlog e retrospectivas
+* `docs/material-base/`: enunciado da Primora e guias de apoio
 
 ---
 
@@ -204,3 +235,25 @@ distribuidora-vetor-etl-api/
 ├── manage.py                       # Utilitário principal de linha de comando do Django
 └── requirements.txt                # Dependências do projeto (Django, DRF, Pandas, OpenPyXL, etc.)
 ```
+
+---
+
+## ⚠️ Limitações Conhecidas
+
+Detalhes em [`docs/REGRAS_DE_NORMALIZACAO.md`](docs/REGRAS_DE_NORMALIZACAO.md):
+
+* Quando o ViaCEP responde, o bairro dele **substitui** o bairro digitado, sem registro de conflito e sem enviar o cliente para revisão.
+* O bairro devolvido pelo ViaCEP não é padronizado (por exemplo, `Sul (Águas Claras)` convive com `Águas Claras Sul`), e a subdivisão não tem coluna própria.
+* O ETL grava o CNPJ com máscara e o telefone como `DD 9XXXX-XXXX`; a API grava os dois só com dígitos.
+* Não há testes automatizados das regras do ETL nem das rotas de exportação e de normalização; o `openapi.yml` não inclui essas rotas.
+* O painel web guarda o token só na memória da página: ao recarregar, é preciso entrar de novo.
+
+---
+
+## 👥 Equipe
+
+| Integrante | Foco principal |
+|------------|----------------|
+| Nayan | Dados e ETL |
+| Bruno | Banco, API e painel web |
+| Davi | Documentação, QA e apresentação |
