@@ -21,9 +21,9 @@ Solução completa desenvolvida para a **Distribuidora Vetor**, contemplando o p
 
 ---
 
-## 🚀 Guia de Execução (Escolha o seu Cenário)
+## 🚀 Guia de Execução
 
-### 🟢 Cenário 1: Primeira vez rodando o projeto do zero
+### Primeira vez rodando o projeto do zero
 
 Siga esta sequência se você acabou de clonar o repositório e ainda não possui o banco nem o ambiente Python configurados.
 
@@ -108,7 +108,7 @@ Rodar de novo não duplica clientes: o resumo passa a mostrar `0 criados, 47 atu
 
 ---
 
-### 🟡 Cenário 2: Já tenho uma versão antiga e preciso atualizar e rodar novamente
+### Já tenho uma versão antiga e preciso atualizar e rodar novamente
 
 Se você já tinha o projeto configurado anteriormente e puxou novas atualizações do GitHub (como suporte a Excel `.xlsx`, painel de normalização admin e ajustes no `.env`):
 
@@ -139,7 +139,7 @@ python manage.py runserver
 
 ---
 
-### 🔵 Cenário 3: Rotina diária (tudo já instalado e configurado)
+### Rotina diária (tudo já instalado e configurado)
 
 Quando o ambiente e o banco já estão prontos e você quer apenas ligar a aplicação para usar ou desenvolver:
 
